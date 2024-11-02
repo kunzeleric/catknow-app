@@ -6,7 +6,9 @@ export const api = axios.create({
     "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
   },
   params: {
-    mime_types: ["image/jpg", "image/png"],
+    limit: 25,
     has_breeds: true,
+    order: "desc",
+    mime_types: "jpg,png",
   },
 });
