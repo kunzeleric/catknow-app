@@ -2,6 +2,7 @@ import { fetchCatDetails } from "@/api/fetch-cat-details";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { ClipLoader } from "react-spinners";
 
 export default function DetailsPage() {
   const { query } = useRouter();
@@ -9,15 +10,18 @@ export default function DetailsPage() {
   const catId = Array.isArray(query.id) ? query.id[0] : (query.id as string);
 
   const { data: cat, isLoading } = useQuery({
-    queryKey: [`catId(${catId})`],
+    queryKey: [catId],
     queryFn: () => fetchCatDetails(catId),
     enabled: !!catId,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   if (isLoading || !cat)
     return (
-      <div className="flex h-screen items-center justify-center">
-        Loading cat details...
+      <div className="flex gap-2 items-center justify-center">
+        <ClipLoader size={40} /> Loading cat details...
       </div>
     );
 
@@ -32,7 +36,7 @@ export default function DetailsPage() {
           height={500}
         />
         <p className="flex items-center justify-center text-center font-bold text-black">
-          {cat.breeds?.[0]?.name}
+          {cat.breeds[0].name}
         </p>
       </div>
 
@@ -40,7 +44,7 @@ export default function DetailsPage() {
         <tbody>
           <tr>
             <td className="py-3 pr-4 font-bold sm:py-0">Name:</td>
-            <td>{cat?.breeds[0].name}</td>
+            <td>{cat.breeds[0].name}</td>
           </tr>
           <tr>
             <td className="py-3 pr-4 font-bold sm:py-0">Description:</td>
