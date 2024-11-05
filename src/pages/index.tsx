@@ -1,50 +1,98 @@
-import { fetchCategories } from "@/api/fetch-categories";
+import { fetchBreeds } from "@/api/fetch-breeds";
 import { fetchCats } from "@/api/fetch-cats";
 import { Card } from "@/components/Card";
 import { FilterPill } from "@/components/FilterPill";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  const { data: cats, isLoading: isLoadingCats } = useQuery({
-    queryKey: ["cats"],
-    queryFn: fetchCats,
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+
+  const {
+    data,
+    isLoading: isLoadingCats,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["cats", selectedFilter],
+    queryFn: ({ pageParam }) =>
+      fetchCats(selectedFilter ?? undefined, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length > 0 ? pages.length : undefined,
+    refetchOnMount: true,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
   });
 
-  const { data: categories, isLoading: isLoadingCategories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: fetchCategories,
+  const { data: breeds, isLoading: isLoadingBreeds } = useQuery({
+    queryKey: ["breeds"],
+    queryFn: fetchBreeds,
+    refetchOnMount: true,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
   });
 
-  const [selectedFilter, setSelectedFilter] = useState("");
+  useEffect(() => {
+    const handleScroll = () => {
+      const screenHeight = window.innerHeight;
+      const screenScrolledHeight = window.scrollY;
+      const screenScrollTotalHeight = document.documentElement.scrollHeight;
+      if (
+        screenHeight + screenScrolledHeight >= screenScrollTotalHeight &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  if (isLoadingCats || isLoadingCategories) return <div className="flex h-screen justify-center items-center">Loading...</div>;
+  if (isLoadingCats || isLoadingBreeds || !data)
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading data...
+      </div>
+    );
 
   return (
-    <section className="mb-4 flex flex-col justify-center md:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
-      <div className="flex flex-wrap justify-start gap-2 py-4">
-        {categories &&
-          categories
-            .slice(0, 8)
-            .map((category) => (
+    <section className="mb-4 flex max-w-sm flex-col justify-center md:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
+      <div className="flex justify-start gap-2 overflow-x-auto pl-2 mb-2 py-2">
+        {breeds &&
+          breeds
+            .sort((a, b) => {
+              if (a.id === selectedFilter) return -1;
+              if (b.id === selectedFilter) return 1;
+              return a.name.localeCompare(b.name);
+            })
+            .map((breed) => (
               <FilterPill
-                key={category.id}
-                title={category.name}
-                isSelected={selectedFilter === category.name}
+                key={breed.id}
+                title={breed.name}
+                isSelected={selectedFilter === breed.id}
                 onSelect={() =>
                   setSelectedFilter(
-                    selectedFilter === category.name ? "" : category.name,
+                    selectedFilter === breed.id ? null : breed.id,
                   )
                 }
               />
             ))}
       </div>
       <div className="grid grid-cols-[209px] justify-center gap-x-10 gap-y-4 md:grid-cols-[repeat(2,minmax(0,209px))] lg:grid-cols-[repeat(4,minmax(0,209px))]">
-        {cats &&
-          cats.map((cat) => {
+        {data.pages.map((page) => {
+          return page.map((cat) => {
             if (cat.breeds.length > 0) return <Card key={cat.id} cat={cat} />;
-          })}
+          });
+        })}
       </div>
+      {isFetchingNextPage && (
+        <div className="w-full py-2 text-center text-lg font-semibold">
+          Loading more cats...
+        </div>
+      )}
     </section>
   );
 }
