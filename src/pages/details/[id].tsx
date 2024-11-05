@@ -10,7 +10,7 @@ export default function DetailsPage() {
 
   const { data: cat, isLoading } = useQuery({
     queryKey: [`catId(${catId})`],
-    queryFn: async () => await fetchCatDetails(catId),
+    queryFn: () => fetchCatDetails(catId),
     enabled: !!catId,
   });
 
@@ -28,8 +28,8 @@ export default function DetailsPage() {
           className="h-auto w-full rounded-t-xl object-cover sm:h-[355px] sm:w-[431px]"
           src={cat.url}
           alt=""
-          width={431}
-          height={355}
+          width={500}
+          height={500}
         />
         <p className="flex items-center justify-center text-center font-bold text-black">
           {cat.breeds?.[0]?.name}

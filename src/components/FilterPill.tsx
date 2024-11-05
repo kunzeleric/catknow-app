@@ -12,9 +12,9 @@ export function FilterPill({ title, isSelected, onSelect }: FilterPillProps) {
         isSelected
           ? "border-white bg-selected-filter text-white"
           : "border-black bg-white text-black"
-      } cursor-pointer rounded-full border px-4 py-1.5 hover:bg-selected-filter hover:text-white hover:border-white duration-300 ease-in-out`}
+      } cursor-pointer text-nowrap rounded-full border px-4 py-1.5 duration-300 ease-in-out hover:border-white hover:bg-selected-filter hover:text-white`}
     >
-      {title[0].toUpperCase() + title.slice(1)}
+      {title}
     </span>
   );
 }
