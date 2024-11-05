@@ -37,21 +37,21 @@ export default function Home() {
   useEffect(() => {
     const handleScroll = () => {
       const screenHeight = window.innerHeight;
-      const screenScrolledHeight = window.scrollY;
-      const screenScrollTotalHeight = document.documentElement.scrollHeight;
-      if (
-        screenHeight + screenScrolledHeight >= screenScrollTotalHeight &&
-        hasNextPage &&
-        !isFetchingNextPage
-      ) {
+      const currentScrollPosition = window.scrollY;
+      const totalScrollHeight = document.documentElement.scrollHeight;
+      const isTotalScrollHeightReached =
+        screenHeight + currentScrollPosition >= totalScrollHeight;
+      
+      if (isTotalScrollHeightReached && hasNextPage && !isFetchingNextPage) {
         fetchNextPage();
       }
     };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  if (isLoadingCats || isLoadingBreeds || !data)
+  if (isLoadingCats || isLoadingBreeds)
     return (
       <div className="flex h-screen items-center justify-center">
         Loading data...
@@ -60,7 +60,7 @@ export default function Home() {
 
   return (
     <section className="mb-4 flex max-w-sm flex-col justify-center md:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
-      <div className="flex justify-start gap-2 overflow-x-auto pl-2 mb-2 py-2">
+      <div className="mb-2 flex justify-start gap-2 overflow-x-auto py-2 pl-2">
         {breeds &&
           breeds
             .sort((a, b) => {
@@ -82,7 +82,7 @@ export default function Home() {
             ))}
       </div>
       <div className="grid grid-cols-[209px] justify-center gap-x-10 gap-y-4 md:grid-cols-[repeat(2,minmax(0,209px))] lg:grid-cols-[repeat(4,minmax(0,209px))]">
-        {data.pages.map((page) => {
+        {data && data.pages.map((page) => {
           return page.map((cat) => {
             if (cat.breeds.length > 0) return <Card key={cat.id} cat={cat} />;
           });
