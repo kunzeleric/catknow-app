@@ -11,7 +11,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <main className={`${inter.className} flex justify-center`}>
       <QueryClientProvider client={queryClient}>
         <div className="flex flex-col justify-center">
-          <h1 className="pt-6 text-center text-5xl font-bold text-black">
+          <h1 className="py-6 text-center text-5xl font-bold text-black">
             CATKNOW
           </h1>
           <Component {...pageProps} />

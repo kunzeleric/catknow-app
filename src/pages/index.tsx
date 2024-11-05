@@ -1,9 +1,9 @@
-import { fetchBreeds } from "@/api/fetch-breeds";
 import { fetchCats } from "@/api/fetch-cats";
 import { Card } from "@/components/Card";
-import { FilterPill } from "@/components/FilterPill";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { FilterSection } from "@/components/FilterSection";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { Suspense, useEffect, useState } from "react";
+import ClipLoader from "react-spinners/ClipLoader";
 
 export default function Home() {
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
@@ -26,14 +26,6 @@ export default function Home() {
     refetchOnWindowFocus: false,
   });
 
-  const { data: breeds, isLoading: isLoadingBreeds } = useQuery({
-    queryKey: ["breeds"],
-    queryFn: fetchBreeds,
-    refetchOnMount: true,
-    refetchOnReconnect: false,
-    refetchOnWindowFocus: false,
-  });
-
   useEffect(() => {
     const handleScroll = () => {
       const screenHeight = window.innerHeight;
@@ -41,7 +33,7 @@ export default function Home() {
       const totalScrollHeight = document.documentElement.scrollHeight;
       const isTotalScrollHeightReached =
         screenHeight + currentScrollPosition >= totalScrollHeight;
-      
+
       if (isTotalScrollHeightReached && hasNextPage && !isFetchingNextPage) {
         fetchNextPage();
       }
@@ -51,48 +43,35 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  if (isLoadingCats || isLoadingBreeds)
+  if (isLoadingCats)
     return (
-      <div className="flex h-screen items-center justify-center">
-        Loading data...
+      <div className="flex gap-2 h-screen items-center justify-center">
+        <ClipLoader size={50} /> Loading data...
       </div>
     );
 
   return (
-    <section className="mb-4 flex max-w-sm flex-col justify-center md:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
-      <div className="mb-2 flex justify-start gap-2 overflow-x-auto py-2 pl-2">
-        {breeds &&
-          breeds
-            .sort((a, b) => {
-              if (a.id === selectedFilter) return -1;
-              if (b.id === selectedFilter) return 1;
-              return a.name.localeCompare(b.name);
-            })
-            .map((breed) => (
-              <FilterPill
-                key={breed.id}
-                title={breed.name}
-                isSelected={selectedFilter === breed.id}
-                onSelect={() =>
-                  setSelectedFilter(
-                    selectedFilter === breed.id ? null : breed.id,
-                  )
-                }
-              />
-            ))}
-      </div>
-      <div className="grid grid-cols-[209px] justify-center gap-x-10 gap-y-4 md:grid-cols-[repeat(2,minmax(0,209px))] lg:grid-cols-[repeat(4,minmax(0,209px))]">
-        {data && data.pages.map((page) => {
-          return page.map((cat) => {
-            if (cat.breeds.length > 0) return <Card key={cat.id} cat={cat} />;
-          });
-        })}
-      </div>
-      {isFetchingNextPage && (
-        <div className="w-full py-2 text-center text-lg font-semibold">
-          Loading more cats...
+    <Suspense fallback={<ClipLoader size={80} />}>
+      <section className="mb-4 flex max-w-sm flex-col justify-center md:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
+        <FilterSection
+          onSelect={setSelectedFilter}
+          selectedFilter={selectedFilter}
+        />
+        <div className="grid grid-cols-[209px] justify-center gap-x-10 gap-y-4 md:grid-cols-[repeat(2,minmax(0,209px))] lg:grid-cols-[repeat(4,minmax(0,209px))]">
+          {data &&
+            data.pages.map((page) => {
+              return page.map((cat) => {
+                if (cat.breeds.length > 0)
+                  return <Card key={cat.id} cat={cat} />;
+              });
+            })}
         </div>
-      )}
-    </section>
+        {isFetchingNextPage && (
+          <div className="flex items-center justify-center gap-2 py-4 text-lg font-semibold">
+            <ClipLoader size={40} /> Loading more cats...
+          </div>
+        )}
+      </section>
+    </Suspense>
   );
 }
